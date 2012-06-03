@@ -1,20 +1,37 @@
 {
+	"proj": {
+
+	},
 	"layers": [{
 		"id": "context",
 		"src": "shp/ne_50m_admin_0_countries.shp",
+		"attributes": {
+			"GU_A3": "iso"
+		},
 		"simplify": 1.5
 	},{
 		"id": "regions",
 		"src": "shp/ne_10m_admin_1_states_provinces_shp.shp",
-		"attributes": [{
-			"src": "ISO", "tgt": "iso3"
-		},"NAME_1","FIPS_1"],
+		"attributes": {
+			"ISO": "iso3",
+			"NAME_1": "name",
+			"FIPS_1": "fips",
+			"FIRST_FIPS": "fips_"
+		},
 		"filter": ["ISO","=","DEU"],
 		"styles": {
 			"fill": "red",
 			"fill-opacity": 0.35
 		},
 		"simplify": 1.2
+	}, {
+		"id": "lakes",
+		"src": "shp/50m-lakes.shp",
+		"filter": ["ScaleRank", "is", 1],
+		"simplify": 0.5,
+		"filter-islands": 15,
+		"ignore-holes": true,
+		"subtract-from": ["context", "regions"]
 	}],
 	"bounds": {
 		"mode": "polygon",
@@ -24,8 +41,8 @@
 		"padding": 0.06
 	},
 	"export": {
-		"height": 300,
-		"round": 1,
+		"width": 450,
+		"round": 0,
 		"ratio": 1.5
 	}
 }
