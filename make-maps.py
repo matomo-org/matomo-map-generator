@@ -30,7 +30,7 @@ custom_ratio = {
     'GUY': 1, 'NOR': 1, 'FIN': 1, 'NZL': 1,
     'PRT': 1, 'GBR': 1, 'IRL': 1, 'SWE': 0.8,
     'CHN': 1, 'COL': 1, 'COG': 1, 'DEU': 1,
-    'FRA': 1.2, 'GHA': 1, 'GRC': 1, 'GRL': 1,
+    'FRA': 1, 'GHA': 1, 'GRC': 1, 'GRL': 1,
     'IND': 1.2, 'ISR': 0.8, 'ITA': 1, 'JPN': 1,
     'KEN': 1, 'KOR': 1, 'LAO': 1, 'LBN': 1,
     'LKA': 1, 'LUX': 1, 'MAR': 1, 'MDA': 1,
@@ -47,6 +47,30 @@ records = sorted(records, key=lambda rec: rec[23] * -1)
 adm_codes = [rec[9] for rec in records]
 
 K = Kartograph()
+
+# also render the world map
+cfg = json.loads(open('worldmap.json').read())
+print 'world'
+K.generate(cfg, map_output_dir + 'world.svg', preview=False)
+
+regions = {
+    'AF': [-20, -38, 53, 40],
+    'SA': [-92, -57, -31, 17],
+    'NA': [-135, 8, -55, 75],
+    'EU': [-17, 33, 45, 68],
+    'OC': [95, -53, 185, 13],
+    'AS': [45, 8, 164, 71]
+}
+
+for region in regions:
+    cfg = json.loads(open('worldmap.json').read())
+    del cfg['proj']['id']
+    cfg['bounds']['data'] = regions[region]
+    map_filename = map_output_dir + region + '.svg'
+    if not os.path.exists(map_filename):
+        print region
+        K.generate(cfg, map_filename, preview=False)
+
 
 for adm_code in adm_codes:
     map_filename = map_output_dir + adm_code + '.svg'
@@ -67,3 +91,4 @@ for adm_code in adm_codes:
             K.generate(tmpl, map_filename, preview=False)
         except:
             print 'error!'
+
