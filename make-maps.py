@@ -38,7 +38,7 @@ custom_ratio = {
     'MWI': 1, 'OMN': 1, 'PAK': 1, 'PER': 1,
     'PHL': 1, 'SRB': 1, 'SUR': 1, 'TCD': 1,
     'TGO': 0.8, 'THA': 0.9, 'TUN': 0.8, 'TWN': 1,
-    'VNM': 0.9, 'VUT': 0.9
+    'VNM': 0.9, 'VUT': 0.9, 'MDA': 1
 }
 
 # extract admin codes from shapefile, sorted by population
@@ -63,7 +63,7 @@ regions = {
 }
 
 for region in regions:
-    cfg = json.loads(open('worldmap.json').read())
+    cfg = json.loads(open('continent-template.json').read())
     del cfg['proj']['id']
     cfg['bounds']['data'] = regions[region]
     map_filename = map_output_dir + region + '.svg'
