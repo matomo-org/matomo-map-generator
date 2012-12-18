@@ -1,82 +1,70 @@
 
 
 from kartograph import Kartograph as Kartograph
+from kartograph.errors import KartographError
 import shapefile
 import json
 import os.path
+import sys
+
+force_countries = sys.argv[1:]
 
 map_output_dir = 'maps/'
+width = 450
 
-custom_bbox = {
-    'USA': [-121, 33, -73, 42],
-    'FRA': [-5, 41, 9, 51.2],
-    'JPN': [128, 30, 147, 46],
-    'PRT': [-10, 37, -5, 42.3],
-    'ECU': [-82, -5, -74, 2],
-    'GBR': [-8.6, 49.5, 3, 59.5],
-    'CHL': [-77, -57, -65, -16]
-}
 
-custom_country_center = {
-    'USA': (-98.606, 39.622),
-    'PRT': (-8, 39.4),
-    'RUS': (98, 62),
-    'AUS': (134.4, -25.1),
-    'GRL': (-45, 90)
-}
+def get_json(f):
+    return json.loads(open(f).read())
 
-custom_ratio = {
-    'CHL': 0.7, 'ARG': 1, 'BRA': 1, 'BOL': 1,
-    'GUY': 1, 'NOR': 1, 'FIN': 1, 'NZL': 1,
-    'PRT': 1, 'GBR': 1, 'IRL': 1, 'SWE': 0.8,
-    'CHN': 1, 'COL': 1, 'COG': 1, 'DEU': 1,
-    'FRA': 1, 'GHA': 1, 'GRC': 1, 'GRL': 1,
-    'IND': 1.2, 'ISR': 0.8, 'ITA': 1, 'JPN': 1,
-    'KEN': 1, 'KOR': 1, 'LAO': 1, 'LBN': 1,
-    'LKA': 1, 'LUX': 1, 'MAR': 1, 'MDA': 1,
-    'MDG': 1, 'MMR': 1, 'MNE': 1, 'MOZ': 1,
-    'MWI': 1, 'OMN': 1, 'PAK': 1, 'PER': 1,
-    'PHL': 1, 'SRB': 1, 'SUR': 1, 'TCD': 1,
-    'TGO': 0.8, 'THA': 0.9, 'TUN': 0.8, 'TWN': 1,
-    'VNM': 0.9, 'VUT': 0.9, 'MDA': 1
-}
+
+custom_bbox = get_json('custom-bbox.json')
+custom_filter = get_json('custom-filter.json')
+custom_country_center = get_json('custom-country-center.json')
+custom_ratio = get_json('custom-ratio.json')
+custom_join = get_json('custom-join.json')
 
 # extract admin codes from shapefile, sorted by population
 records = shapefile.Reader('shp/ne_50m_admin_0_countries.shp').records()
 records = sorted(records, key=lambda rec: rec[23] * -1)
 adm_codes = [rec[9] for rec in records]
 
+
 K = Kartograph()
 
 # also render the world map
 cfg = json.loads(open('worldmap.json').read())
-print 'world'
-K.generate(cfg, map_output_dir + 'world.svg', preview=False)
+#print 'world'
+cfg['export']['width'] = width
+#K.generate(cfg, map_output_dir + 'world.svg', preview=False)
 
-regions = {
-    'AF': [-20, -38, 53, 40],
-    'SA': [-92, -57, -31, 17],
-    'NA': [-135, 8, -55, 75],
-    'EU': [-17, 33, 45, 68],
-    'OC': [95, -53, 185, 13],
-    'AS': [45, 8, 164, 71]
-}
+regions = get_json('region-bbox.json')
 
 for region in regions:
     cfg = json.loads(open('continent-template.json').read())
     del cfg['proj']['id']
     cfg['bounds']['data'] = regions[region]
+    cfg['export']['width'] = width
     map_filename = map_output_dir + region + '.svg'
     if not os.path.exists(map_filename):
         print region
-        K.generate(cfg, map_filename, preview=False)
+        K.generate(cfg, map_filename, preview=True)
+
+err = []
+ignore = set(get_json('ignore-countries.json'))
 
 
+# render country maps
 for adm_code in adm_codes:
+    if adm_code in ignore:
+        continue
     map_filename = map_output_dir + adm_code + '.svg'
-    if not os.path.exists(map_filename):
+    l = 1
+    if not os.path.exists(map_filename) or adm_code in force_countries:
         tmpl = json.loads(open('country-template.json').read())
-        tmpl['layers'][1]['filter'][2] = adm_code
+        if os.path.exists('shp/custom/%s.shp' % adm_code):
+            tmpl['layers'][l]['src'] = 'shp/custom/%s.shp' % adm_code
+        tmpl['export']['width'] = width
+        tmpl['layers'][l]['filter'][2] = adm_code
         if adm_code in custom_bbox:
             tmpl['bounds']['mode'] = 'bbox'
             tmpl['bounds']['data'] = custom_bbox[adm_code]
@@ -86,9 +74,16 @@ for adm_code in adm_codes:
             tmpl['proj']['lat0'] = lat
         if adm_code in custom_ratio:
             tmpl['export']['ratio'] = custom_ratio[adm_code]
-        print adm_code
+        if adm_code in custom_filter:
+            tmpl['bounds']['data']['filter'] = custom_filter[adm_code]
+        if adm_code in custom_join:
+            tmpl['layers'][l]['join'] = custom_join[adm_code]
         try:
+            # print json.dumps(tmpl)
+            print adm_code
             K.generate(tmpl, map_filename, preview=False)
-        except:
-            print 'error!'
+        except KartographError, e:
+            err.append(adm_code)
+            print e.message
 
+print err

@@ -1,0 +1,15 @@
+{
+    "GBR": {
+        "group-by": "Region_C_1", "group-as": "region_code",
+        "attributes": { "NAME_1": "Region_C_1" },
+        "export-ids": "FIRST_FIPS"
+    },
+    "JPN": {
+        "group-by": "region", "group-as": "name"
+    },
+    "SVN": {
+        "group-by": "region_cod", "group-as": "region_code",
+        "attributes": { "NAME_1": "region" },
+        "export-ids": "FIPS_1"
+    }
+}

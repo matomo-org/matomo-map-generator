@@ -3,14 +3,6 @@
 
 	},
 	"layers": [{
-		"id": "context",
-		"src": "shp/ne_50m_admin_0_countries.shp",
-		"attributes": {
-			"iso": "GU_A3"
-		},
-		"simplify": 1.5,
-		"charset": "latin1"
-	},{
 		"id": "regions",
 		"src": "shp/ne_10m_admin_1_states_provinces_shp.shp",
 		"attributes": {
@@ -18,7 +10,6 @@
 			"name": "NAME_1",
 			"fips": "FIPS_1",
 			"fips_": "FIRST_FIPS",
-			"region": "region_code",
 			"p": "Postal"
 		},
 		"charset": "latin1",
@@ -31,14 +22,14 @@
 		"simplify": 0.5,
 		"filter-islands": 15,
 		"ignore-holes": true,
-		"subtract-from": ["context", "regions"]
+		"subtract-from": ["regions"]
 	}],
 	"bounds": {
 		"mode": "polygon",
 		"data": {
 			"layer": "regions"
 		},
-		"padding": 0.06
+		"padding": 0.0
 	},
 	"export": {
 		"width": 850,
